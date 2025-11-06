@@ -83,10 +83,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
-        serif: ["Georgia", "serif"],
-        mono: ["Menlo", "monospace"],
-        heading: ["Montserrat", "Inter", "sans-serif"],
+        sans: ["var(--font-sans)"],
+        serif: ["var(--font-serif)"],
+        mono: ["var(--font-mono)"],
       },
       keyframes: {
         "accordion-down": {

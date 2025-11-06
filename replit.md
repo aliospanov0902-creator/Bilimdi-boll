@@ -1,8 +1,12 @@
-# Bilimdi - Educational Platform for Kazakhstani Students
+# Bilim Bulak - Educational Platform for ENT Preparation
 
 ## Overview
 
-Bilimdi is a bilingual educational platform designed for Kazakhstani students in grades 6-11. The platform provides educational content in both Russian and Kazakh languages, featuring subject-based learning modules and an AI chat assistant. The application emphasizes accessibility, clean design, and a seamless bilingual experience with instant language switching.
+Bilim Bulak is a bilingual (Russian/Kazakh) educational platform designed to help students in grades 6-11 prepare for the ENT (Unified National Testing) in Kazakhstan. The platform provides comprehensive subject lessons with an integrated AI tutor assistant powered by OpenAI's GPT-4.
+
+**Core Purpose**: Deliver accessible, culturally-relevant education materials with AI-powered personalized tutoring for Kazakhstan's national standardized testing.
+
+**Target Users**: Students in grades 6-11 preparing for ENT across 8 core subjects (Mathematics, Physics, Chemistry, Biology, Kazakhstan History, Geography, Literature, English).
 
 ## User Preferences
 
@@ -12,144 +16,117 @@ Preferred communication style: Simple, everyday language.
 
 ### Frontend Architecture
 
-**Framework & Build System**
-- React 18 with TypeScript for type-safe component development
-- Vite as the build tool and development server for fast HMR and optimized production builds
-- Wouter for lightweight client-side routing
+**Technology Stack**:
+- React 18 with TypeScript for type safety
+- Vite as build tool and development server
+- Wouter for client-side routing (lightweight alternative to React Router)
+- TanStack Query (React Query) for server state management and caching
 
-**UI Component System**
-- Shadcn/UI components built on Radix UI primitives for accessible, customizable components
-- Tailwind CSS for utility-first styling with custom design tokens
-- Class Variance Authority (CVA) for managing component variants
-- Custom theme system supporting light/dark modes with CSS variables
+**UI Component System**:
+- shadcn/ui components built on Radix UI primitives
+- Tailwind CSS for styling with custom design tokens
+- Material Design principles adapted with Kazakhstan cultural identity (azure blue #00AFCA, gold #FFCB05)
+- Component library includes custom educational components (SubjectCard, LessonCard, ProgressCard, AIChat)
 
-**State Management**
-- React Context API for global state (Language and Theme contexts)
-- TanStack Query (React Query) for server state management and data fetching
-- Local component state with React hooks
+**State Management Strategy**:
+- React Context API for global state (LanguageContext for i18n, ProgressContext for learning progress)
+- Local storage persistence for user progress tracking
+- TanStack Query handles all server state with aggressive caching (staleTime: Infinity)
 
-**Design System**
-- Typography: Inter (UI), Montserrat (headings), Georgia (content)
-- Custom spacing system based on Tailwind's 4-unit grid
-- Elevation system using CSS custom properties for hover/active states
-- Bilingual-first design with instant language switching without page reload
-
-**Component Architecture**
-- Atomic design pattern with reusable UI primitives
-- Feature-based components (SubjectCard, TopicCard, ChatInterface)
-- Layout components (Header, Hero, Footer)
-- Context providers for cross-cutting concerns
+**Internationalization**:
+- Custom translation system using React Context
+- All content stored in bilingual format (ru/kz properties)
+- Dynamic language switching without page reload
 
 ### Backend Architecture
 
-**Server Framework**
-- Express.js server with TypeScript
-- HTTP server creation via Node's native http module
-- Middleware for JSON parsing, URL encoding, and request logging
+**Server Framework**:
+- Express.js with TypeScript running on Node.js
+- RESTful API design pattern
+- Custom Vite middleware integration for development HMR
 
-**Development Environment**
-- Vite middleware integration for HMR in development
-- Custom logging system with timestamps
-- Hot module replacement with Vite's dev server
+**API Design**:
+- Resource-based endpoints (/api/subjects, /api/lessons, /api/chat)
+- Query parameter filtering (subjectId, grade)
+- JSON request/response format
+- Error handling with appropriate HTTP status codes
 
-**API Design**
-- RESTful API structure (routes prefixed with /api)
-- Storage abstraction layer with interface-based design
-- In-memory storage implementation (MemStorage) for development
-- Prepared for database integration via storage interface
+**Storage Layer**:
+- In-memory storage implementation (MemStorage class)
+- Interface-based design (IStorage) allows future database migration
+- Static JSON files for educational content (subjects.json, lessons.json)
+- Drizzle ORM configured for PostgreSQL (currently unused but prepared)
 
-**Data Layer**
-- Drizzle ORM configured for PostgreSQL
-- Schema-first approach with Zod validation
-- Database schema includes subjects and topics tables
-- Support for bilingual content (Russian and Kazakh fields)
+**Session Management**:
+- connect-pg-simple configured for PostgreSQL session store
+- Express session middleware for user authentication (infrastructure ready)
 
-### Data Storage Solutions
+### Data Architecture
 
-**Database**
-- PostgreSQL as the primary database (configured via Drizzle)
-- Neon serverless PostgreSQL driver for cloud deployment
-- Migration system via Drizzle Kit
+**Schema Design** (Drizzle ORM with PostgreSQL readiness):
+- Users table: id (UUID), username (unique), password
+- Educational content stored as typed interfaces (Subject, Lesson, ChatMessage)
 
-**Schema Design**
-- Subjects table: bilingual names, icons, grade ranges
-- Topics table: bilingual titles/descriptions/content, difficulty levels, grade-specific content
-- UUID primary keys with PostgreSQL's gen_random_uuid()
+**Data Models**:
+```typescript
+Subject: { id, name: {ru, kz}, icon, color, lessons, classes[] }
+Lesson: { id, subjectId, number, grade, title: {ru, kz}, content: {ru, kz}, duration, difficulty }
+ChatMessage: { role: 'user' | 'assistant', content }
+```
 
-**Validation**
-- Drizzle-Zod integration for runtime schema validation
-- Type-safe database operations with TypeScript inference
+**Content Organization**:
+- Lessons organized by subject and grade level
+- Markdown-formatted lesson content for rich text rendering
+- Progress tracked by lesson IDs with completion state and streak calculation
 
-### Authentication and Authorization
+### External Dependencies
 
-Currently not implemented - the platform appears to be designed for open access without user accounts. The storage interface includes user-related methods (getUser, createUser) suggesting future authentication may be planned.
+**OpenAI Integration**:
+- GPT-4o-mini model for AI tutoring functionality
+- System prompts customized for educational context and bilingual support
+- Separate prompts for Russian and Kazakh languages
+- Temperature: 0.7, Max tokens: 1000 for balanced responses
+- Error handling with fallback messages
 
-### Internationalization (i18n)
+**Database** (Configured but not actively used):
+- Neon Database serverless PostgreSQL (@neondatabase/serverless)
+- Drizzle ORM for type-safe database operations
+- Migration system ready (drizzle-kit)
+- Connection via DATABASE_URL environment variable
 
-**Language Support**
-- Custom LanguageContext providing translation function (t)
-- Runtime language switching between Russian (ru) and Kazakh (kk)
-- No external i18n library - simple key-based translation system
-- Language preference stored in component state (not persisted)
+**Third-Party UI Libraries**:
+- Radix UI primitives for accessible component foundations
+- Lucide React for iconography
+- Embla Carousel for content carousels
+- React Hook Form with Zod for form validation (infrastructure ready)
 
-**Content Strategy**
-- All user-facing strings use the `t(ru, kk)` translation function
-- Database content stored in separate language-specific columns
-- UI components render appropriate language based on context
+**Development Tools**:
+- Replit-specific plugins for runtime error overlay, cartographer, and dev banner
+- TypeScript for full-stack type safety
+- ESBuild for production bundling
 
-### Theme System
+**Google Fonts**:
+- Inter for body text and UI elements
+- Poppins for headings and titles
+- Architects Daughter, DM Sans, Fira Code, Geist Mono (configured but not primary)
 
-**Implementation**
-- Custom ThemeContext managing light/dark mode
-- Theme preference persisted in localStorage
-- CSS custom properties for dynamic theming
-- Tailwind's dark mode class strategy
+### Authentication & Authorization
 
-**Design Tokens**
-- HSL-based color system for granular control
-- Separate tokens for backgrounds, borders, text, and interactive states
-- Custom elevation variables for hover/active states
-- Flat design with subtle shadows and borders
+**Current State**: Infrastructure prepared but not implemented
+- User schema defined with username/password
+- Session management middleware configured
+- No active authentication flow (public access to all content)
 
-## External Dependencies
+### Build & Deployment
 
-### UI Component Libraries
-- **Radix UI**: Headless component primitives for accessibility (@radix-ui/react-*)
-- **Shadcn/UI**: Component system built on Radix
-- **Lucide React**: Icon library for consistent iconography
-- **Embla Carousel**: Carousel/slider functionality
-- **cmdk**: Command palette component
-- **Vaul**: Drawer component primitives
-- **React Day Picker**: Calendar/date picker
-- **Recharts**: Charting library
+**Development**:
+- `npm run dev`: Runs Express server with Vite middleware for HMR
+- TSX for TypeScript execution in development
 
-### Styling & Utilities
-- **Tailwind CSS**: Utility-first CSS framework
-- **class-variance-authority**: Component variant management
-- **clsx & tailwind-merge**: Class name utilities
+**Production**:
+- `npm run build`: Vite builds client, ESBuild bundles server
+- `npm start`: Runs compiled server from dist/
+- Client assets served from dist/public/
 
-### Form Management
-- **React Hook Form**: Form state management
-- **@hookform/resolvers**: Validation resolver integration
-- **Zod**: Schema validation
-
-### Data Fetching & State
-- **TanStack Query**: Server state management and caching
-- **Drizzle ORM**: Type-safe database queries
-- **@neondatabase/serverless**: PostgreSQL connection for serverless environments
-
-### Development Tools
-- **Vite**: Build tool and dev server
-- **TypeScript**: Type safety across the stack
-- **Drizzle Kit**: Database migration management
-- **ESBuild**: JavaScript bundler for production builds
-- **Replit Plugins**: Development environment enhancements (@replit/vite-plugin-*)
-
-### Session Management
-- **connect-pg-simple**: PostgreSQL session store (configured but not actively used)
-
-### Future Integrations
-The platform appears prepared for:
-- AI chat functionality (UI exists, backend integration pending)
-- User authentication system (storage interface includes user methods)
-- Real-time features (session management infrastructure in place)
+**Database Operations**:
+- `npm run db:push`: Drizzle schema push to database (when DATABASE_URL is set)
